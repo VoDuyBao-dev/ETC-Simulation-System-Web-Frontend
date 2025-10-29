@@ -1,0 +1,17 @@
+.dashboard {
+  padding: 20px 40px;
+  margin-top: 80px;
+  margin-left: 230px; // tránh đè sidebar
+  background: #f7f7f7;
+  min-height: 100vh;
+
+  h2 {
+    margin-bottom: 5px;
+  }
+
+  .graph-placeholder {
+    background: #dfe6e9;
+    height: 300px;
+    border-radius: 10px;
+  }
+}

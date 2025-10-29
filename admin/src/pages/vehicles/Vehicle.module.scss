@@ -1,0 +1,117 @@
+.vehiclePage {
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(100, 100, 150, 0.1);
+  margin-top: 60px;
+  margin-left: 250px; /* tránh đè sidebar */
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    h2 {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      color: #2a3f54;
+    }
+    .addBtn {
+      background: #1abb9c;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      
+      &:hover {
+        background: #17a589;
+      }
+    }
+  }
+
+  .tableWrapper {
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #4a647d;
+    }
+
+    th {
+        background: #2a3f54;
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
+        border-bottom: 1px solid #ffffff;
+    }
+
+    tr:hover td {
+        background: #f2f2f2;
+    }
+
+    .actions button {
+      margin-right: 8px;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .deleteBtn {
+        color: #dc3545;
+
+        &:hover {
+            color: #a71d2a;
+        }
+    }
+
+    .lockBtn {
+        color: #6c757d;
+
+        &:hover {
+            color:#343a40;
+        }
+    }
+}
+
+  .active {
+    color: #22c55e;
+    font-weight: 600;
+  }
+
+  .inactive {
+    color: #ef4444;
+    font-weight: 600;
+  }
+/* === Trạng thái === */
+.status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  &.active {
+    background: #d4edda;
+    color: #155724;
+  }
+  &.stopped {
+    background: #f8d7da;
+    color: #721c24;
+  }
+}
+}

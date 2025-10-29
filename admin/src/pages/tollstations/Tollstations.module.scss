@@ -1,0 +1,233 @@
+.page {
+  padding: 20px;
+  margin-top: 60px;
+  margin-left: 250px; /* tránh đè sidebar */
+
+  h2 {
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    color: #2a3f54;
+  }
+}
+
+/* === Thống kê nhanh === */
+.stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+
+  .card {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    h4 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  }
+
+  .total {
+  background: linear-gradient(135deg, #c9d6ff, #e2e2e2); /* xanh tím nhạt pastel */
+  color: #222;
+  box-shadow: 0 4px 15px rgba(128, 128, 255, 0.2);
+}
+
+.active {
+  background: linear-gradient(135deg, #a8ff78, #78ffd6); /* xanh lá neon nhẹ dịu */
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(120, 255, 214, 0.3);
+}
+
+.maintenance {
+  background: linear-gradient(135deg, #fbc2eb, #a6c1ee); /* cam đất pha tím pastel */
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(251, 194, 235, 0.3);
+}
+
+.stopped {
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4); /* đỏ tía dịu */
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3);
+}
+
+
+}
+
+/* === Bộ lọc + nút thêm === */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+  }
+
+  button {
+    background:#1abb9c;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    &:hover {
+      background: #17977d;
+    }
+  }
+}
+
+/* === Form === */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #f7f9fc;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+
+  input,
+  select {
+    flex: 1 1 200px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  .formActions {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+
+    button {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:first-child {
+        background: #28a745;
+        color: white;
+      }
+      &:last-child {
+        background: #ccc;
+      }
+    }
+  }
+}
+
+/* === Bảng danh sách === */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+
+  th,
+  td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #4a647d;
+  }
+
+  th {
+    background: #2a3f54;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    border-bottom: 1px solid #ffffff;
+  }
+
+  tr:hover td {
+    background: #f2f2f2;
+  }
+
+  button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+
+  .mapBtn {
+    color: #0fbd63;
+    &:hover {
+      color: darken(#0fbd63, 10%);
+    }
+  }
+
+  .deleteBtn {
+    color: #dc3545;
+
+    &:hover {
+      color: #a71d2a;
+    }
+  }
+
+  .lockBtn {
+    color: #6c757d;
+
+    &:hover {
+      color:#343a40;
+    }
+  }
+}
+
+/* === Trạng thái === */
+.status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  &.active {
+    background: #d4edda;
+    color: #155724;
+  }
+  &.maintenance {
+    background: #fff3cd;
+    color: #856404;
+  }
+  &.stopped {
+    background: #f8d7da;
+    color: #721c24;
+  }
+}
+
+/* === Bản đồ mô phỏng === */
+.mapContainer {
+  margin-top: 20px;
+  iframe {
+    border-radius: 8px;
+  }
+
+  button {
+    margin-top: 10px;
+    background: #dc3545;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+}

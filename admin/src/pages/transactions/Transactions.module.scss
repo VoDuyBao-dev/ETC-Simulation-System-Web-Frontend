@@ -1,0 +1,147 @@
+.transactionsPage {
+  padding: 20px;
+  background: linear-gradient(180deg, #f6f4fb, #efeafc);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(120, 110, 255, 0.06);
+  margin-top: 60px;
+  margin-left: 250px; /* tránh đè sidebar */
+}
+
+/* header + filters */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    color: #2a3f54;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+  }
+
+  .filterGroup {
+    display: flex;
+    flex-direction: column;
+    label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    select, input[type="date"] {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      min-width: 160px;
+    }
+  }
+
+  button {
+    background: #6a4fe0;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    &:hover { background: #5b3ee0; }
+  }
+
+  .exportBtn {
+    background: linear-gradient(135deg, #32ffb8, #0fd07a);
+    color: #07291a;
+  }
+}
+
+/* stats */
+.stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+
+  .card {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    h4 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  }
+
+    .total {
+        background: linear-gradient(135deg, #a8ff78, #78ffd6); /* xanh lá neon nhẹ dịu */
+        color: #1a1a1a;
+        box-shadow: 0 4px 15px rgba(120, 255, 214, 0.3);
+    }
+
+    .revenue {
+        background: linear-gradient(135deg, #ff9a9e, #fad0c4); /* đỏ tía dịu */
+        color: #1a1a1a;
+        box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3);
+    }
+
+
+}
+/* table */
+.tableWrapper { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+
+  thead {
+    background: linear-gradient(135deg,#e9e4f7,#ffffff);
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #4a647d;
+    }
+
+    th {
+        background: #2a3f54;
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
+        border-bottom: 1px solid #ffffff;
+    }
+
+    tr:hover td {
+        background: #f2f2f2;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1eef8;
+    &:hover { background: #fbf9ff; }
+  }
+
+  td {
+    padding: 12px 14px;
+    color: #333;
+  }
+}

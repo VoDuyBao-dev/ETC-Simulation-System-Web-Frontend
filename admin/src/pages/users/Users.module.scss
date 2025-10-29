@@ -1,0 +1,108 @@
+.container {
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: calc(100vh - 60px);
+  margin-top: 60px;
+  margin-left: 250px; /* tránh đè sidebar */
+
+  h2 {
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    color: #2a3f54;
+  }
+}
+
+/* ====== Table ====== */
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+
+  th,
+  td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #4a647d;
+  }
+
+  th {
+    background: #2a3f54;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    border-bottom: 1px solid #ffffff;
+  }
+
+  tr:hover td {
+    background: #f2f2f2;
+  }
+}
+
+/* ====== Status ====== */
+.status {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+
+  &.active {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  &.inactive {
+    background: #f8d7da;
+    color: #721c24;
+  }
+}
+
+/* ====== Action Buttons ====== */
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 8px;
+  transition: 0.2s;
+
+  &.editBtn {
+    color: #007bff;
+
+    &:hover {
+      color: #0056b3;
+    }
+  }
+
+  &.deleteBtn {
+    color: #dc3545;
+
+    &:hover {
+      color: #a71d2a;
+    }
+  }
+
+  &.lockBtn {
+    color: #6c757d;
+
+    &:hover {
+      color: #343a40;
+    }
+  }
+
+  &.saveBtn {
+    background: #1abb9c;
+    color: #fff;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 14px;
+
+    &:hover {
+      background: #17a589;
+    }
+  }
+}
