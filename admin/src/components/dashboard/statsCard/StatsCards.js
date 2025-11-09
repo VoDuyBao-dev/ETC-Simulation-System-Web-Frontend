@@ -1,15 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./StatsCards.module.scss";
-import users from '~/assets/imgs/users.jpg';
-import vehicles from '~/assets/imgs/vehicles.jpg';
-import tollstations from '~/assets/imgs/tollstations.jpg'
+import { getStats } from "~/api/homeAPI";
+import usersImg from '~/assets/imgs/users.jpg';
+import vehiclesImg from '~/assets/imgs/vehicles.jpg';
+import tollstationsImg from '~/assets/imgs/tollstations.jpg';
 
 export default function StatsCards() {
-  const stats = [
-    { title: "Người dùng", value: "2,500", change: "+14%", img: users },
-    { title: "Phương tiện", value: "3,050", change: "+5%", img: vehicles },
-    { title: "Trạm thu phí", value: "450", change: "+7%", img: tollstations },
-  ];
+  const [stats, setStats] = useState([
+    { title: "Người dùng", value: "0", change: "+0%", img: usersImg },
+    { title: "Phương tiện", value: "0", change: "+0%", img: vehiclesImg },
+    { title: "Trạm thu phí", value: "0", change: "+0%", img: tollstationsImg },
+  ]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getStats();
+        setStats([
+          { title: "Người dùng", value: data.users.toLocaleString(), change: "+14%", img: usersImg },
+          { title: "Phương tiện", value: data.vehicles.toLocaleString(), change: "+5%", img: vehiclesImg },
+          { title: "Trạm thu phí", value: data.tollstations.toLocaleString(), change: "+7%", img: tollstationsImg },
+        ]);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div className={styles.statsGrid}>
@@ -22,7 +39,7 @@ export default function StatsCards() {
               <span className={styles.change}>{item.change}</span>
             </div>
             <div>
-              <img src={item.img}></img>
+              <img src={item.img} alt={item.title} />
             </div>
           </div>
         </div>

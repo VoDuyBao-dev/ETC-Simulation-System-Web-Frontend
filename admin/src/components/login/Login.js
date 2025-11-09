@@ -36,7 +36,6 @@ const Login = () => {
 
     try {
       const data = await login(form.username, form.password);
-      console.log("Login API response:", data);
       localStorage.setItem("token", data.token);
       if (form.remember) localStorage.setItem("rememberUser", form.username);
       navigate("/");

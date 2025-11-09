@@ -1,91 +1,58 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styles from "./Transactions.module.scss";
-import {
-  FaSearch,
-  FaFileExport,
-  FaMoneyBillWave,
-  FaClock,
-  FaMapMarkedAlt,
-} from "react-icons/fa";
+import { FaSearch, FaFileExport, FaMoneyBillWave, FaClock, FaMapMarkedAlt } from "react-icons/fa";
 import Pagination from "../../components/pagination/pagination";
-
-/**
- * Transactions page
- * - Filter: station (select), dateFrom, dateTo
- * - Search applies filters locally
- * - Export CSV exports filtered rows
- */
-
-const initialData = [
-  { id: 1, station: "Trạm A", vehicle: "51A-123.45", amount: 30000, time: "2025-10-28T08:30:00" },
-  { id: 2, station: "Trạm B", vehicle: "59B1-678.90", amount: 15000, time: "2025-10-28T09:10:00" },
-  { id: 3, station: "Trạm C", vehicle: "43C-999.88", amount: 45000, time: "2025-10-27T16:45:00" },
-  { id: 4, station: "Trạm A", vehicle: "29C-222.33", amount: 20000, time: "2025-10-27T10:05:00" },
-  { id: 5, station: "Trạm B", vehicle: "88B-000.11", amount: 50000, time: "2025-10-26T12:20:00" },
-];
+import { getTransactions } from "../../api/transactionAPI";
 
 const Transactions = () => {
-  const [transactions] = useState(initialData);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // filter state
   const [filter, setFilter] = useState({
-    station: "Tất cả", // or station name
+    station: "Tất cả",
     dateFrom: "",
     dateTo: "",
   });
 
-  // unique station list (for select)
-  const stations = useMemo(() => {
+  // Lấy dữ liệu từ backend
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const data = await getTransactions(filter);
+      setTransactions(data);
+    } catch (err) {
+      alert("Lỗi khi tải dữ liệu: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Khi filter thay đổi, reload data
+  useEffect(() => {
+    fetchData();
+  }, [filter]);
+
+  const stations = useCallback(() => {
     const s = Array.from(new Set(transactions.map((t) => t.station)));
     return ["Tất cả", ...s];
   }, [transactions]);
 
-  // parsed and filtered transactions
-  const filtered = useMemo(() => {
-    return transactions.filter((t) => {
-      // station filter
-      if (filter.station !== "Tất cả" && t.station !== filter.station) return false;
+  const filtered = useCallback(() => {
+    return transactions; // backend đã filter
+  }, [transactions]);
 
-      // date filter: compare only date portion
-      if (filter.dateFrom) {
-        const from = new Date(filter.dateFrom);
-        const tDate = new Date(t.time);
-        // set from to 00:00:00
-        from.setHours(0, 0, 0, 0);
-        if (tDate < from) return false;
-      }
-      if (filter.dateTo) {
-        const to = new Date(filter.dateTo);
-        const tDate = new Date(t.time);
-        // set to to 23:59:59
-        to.setHours(23, 59, 59, 999);
-        if (tDate > to) return false;
-      }
-      return true;
-    });
-  }, [transactions, filter]);
-
-  // stats from filtered
-  const stats = useMemo(() => {
+  const stats = useCallback(() => {
     const totalAmount = filtered.reduce((s, x) => s + (x.amount || 0), 0);
-    return {
-      count: filtered.length,
-      totalAmount,
-    };
+    return { count: filtered.length, totalAmount };
   }, [filtered]);
 
-  // apply quick search (already reactive by binding inputs), but keep a handler in case
   const handleSearch = (e) => {
     e?.preventDefault?.();
-    // filter state already updated by inputs — this handler kept for semantic button
+    fetchData();
   };
 
-  // export CSV of filtered
   const handleExport = () => {
-    if (!filtered.length) {
-      alert("Không có dữ liệu để xuất.");
-      return;
-    }
+    if (!filtered.length) return alert("Không có dữ liệu để xuất.");
     const header = ["ID", "Trạm", "Biển số", "Số tiền", "Thời gian"];
     const rows = filtered.map((r) => [
       r.id,
@@ -95,7 +62,9 @@ const Transactions = () => {
       new Date(r.time).toLocaleString(),
     ]);
 
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -107,6 +76,8 @@ const Transactions = () => {
     a.remove();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) return <p>Đang tải dữ liệu...</p>;
 
   return (
     <div className={styles.transactionsPage}>
@@ -120,9 +91,7 @@ const Transactions = () => {
               value={filter.station}
               onChange={(e) => setFilter({ ...filter, station: e.target.value })}
             >
-              {stations.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {stations.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
 
@@ -144,17 +113,13 @@ const Transactions = () => {
             />
           </div>
 
-          <button type="submit" onClick={handleSearch}>
-            <FaSearch /> Tra cứu
-          </button>
-
+          <button type="submit"><FaSearch /> Tra cứu</button>
           <button type="button" className={styles.exportBtn} onClick={handleExport}>
             <FaFileExport /> Xuất báo cáo
           </button>
         </form>
       </div>
 
-      {/* quick stats */}
       <div className={styles.stats}>
         <div className={`${styles.card} ${styles.total}`}>
           <h4>Tổng giao dịch</h4>
@@ -196,7 +161,6 @@ const Transactions = () => {
       </div>
 
       <Pagination/>
-      
     </div>
   );
 };
