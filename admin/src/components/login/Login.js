@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Login.scss";
 import { FaUser, FaLock } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import {login} from "../../api/loginAPI"
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,24 +25,24 @@ const Login = () => {
   };
 
   // Xử lý đăng nhập
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     // Kiểm tra đơn giản (vì form tĩnh)
-    if (form.username.trim() === "" || form.password.trim() === "") {
+    if (!form.username || !form.password) {
       alert("Vui lòng nhập đầy đủ thông tin đăng nhập!");
       return;
     }
 
-    // Nếu có "remember", lưu thông tin vào localStorage
-    if (form.remember) {
-      localStorage.setItem("rememberUser", form.username);
-    } else {
-      localStorage.removeItem("rememberUser");
+    try {
+      const data = await login(form.username, form.password);
+      console.log("Login API response:", data);
+      localStorage.setItem("token", data.token);
+      if (form.remember) localStorage.setItem("rememberUser", form.username);
+      navigate("/");
+    } catch (err) {
+      alert(err.message);
     }
-
-    // Điều hướng về trang chủ
-    navigate("/");
   };
 
   return (

@@ -7,6 +7,7 @@ import {
   FaClock,
   FaMapMarkedAlt,
 } from "react-icons/fa";
+import Pagination from "../../components/pagination/pagination";
 
 /**
  * Transactions page
@@ -193,6 +194,9 @@ const Transactions = () => {
           </tbody>
         </table>
       </div>
+
+      <Pagination/>
+      
     </div>
   );
 };

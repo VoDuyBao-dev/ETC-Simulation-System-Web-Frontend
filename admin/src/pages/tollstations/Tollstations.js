@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "./Tollstations.module.scss";
 import { FaEdit, FaTrash, FaPlus, FaMapMarkerAlt, FaFilter } from "react-icons/fa";
+import Pagination from "../../components/pagination/pagination";
 
 const TollStationPage = () => {
   const [stations, setStations] = useState([
@@ -110,7 +111,7 @@ const TollStationPage = () => {
           <p>{maintenance}</p>
         </div>
         <div className={`${styles.card} ${styles.stopped}`}>
-          <h4>Ngừng</h4>
+          <h4>Dừng hoạt động</h4>
           <p>{stopped}</p>
         </div>
       </div>
@@ -123,7 +124,7 @@ const TollStationPage = () => {
             <option value="Tất cả">Tất cả</option>
             <option value="Hoạt động">Hoạt động</option>
             <option value="Bảo trì">Bảo trì</option>
-            <option value="Ngừng">Ngừng</option>
+            <option value="Dừng hoạt động">Dừng hoạt động</option>
           </select>
         </div>
 
@@ -186,6 +187,7 @@ const TollStationPage = () => {
       <table className={styles.table}>
         <thead>
           <tr>
+            <th>Mã trạm</th>
             <th>Tên trạm</th>
             <th>Vị trí</th>
             <th>Trạng thái</th>
@@ -196,6 +198,7 @@ const TollStationPage = () => {
         <tbody>
           {filteredStations.map((s) => (
             <tr key={s.id}>
+              <td>{s.id}</td>
               <td>{s.name}</td>
               <td>{s.location}</td>
               <td>
@@ -246,6 +249,9 @@ const TollStationPage = () => {
           <button onClick={() => setSelectedMap(null)}>Đóng bản đồ</button>
         </div>
       )}
+
+      {/* === Phân trang === */}
+      <Pagination/>
     </div>
   );
 };

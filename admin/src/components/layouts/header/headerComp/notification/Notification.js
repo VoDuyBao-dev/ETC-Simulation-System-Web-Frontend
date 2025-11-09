@@ -23,7 +23,7 @@ const Notifications = () => {
       id: 3,
       name: "Xe chưa đủ số dư",
       time: "25 phút trước",
-      message: "Xe 59B1-678.90 không đủ tiền để qua trạm C.",
+      message: "Xe 59B1-678.90 Đéo đủ tiền để qua trạm C.",
       avatar: "https://i.pravatar.cc/50",
     },
     

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "./Users.module.scss";
 import { FaTrash, FaLock, FaUnlock } from "react-icons/fa";
+import Pagination from "../../components/pagination/pagination";
 
 const User = () => {
   const [users, setUsers] = useState([
@@ -39,7 +40,7 @@ const User = () => {
         <table className={styles.userTable}>
           <thead>
             <tr>
-              <th>#</th>
+              <th></th>
               <th>Tên</th>
               <th>Email</th>
               <th>Quyền</th>
@@ -82,6 +83,7 @@ const User = () => {
           </tbody>
         </table>
       </div>
+      <Pagination/>
     </div>
   );
 };

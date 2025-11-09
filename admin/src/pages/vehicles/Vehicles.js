@@ -7,6 +7,7 @@ import {
   FaLock,
   FaUnlock,
 } from "react-icons/fa";
+import Pagination from "../../components/pagination/pagination";
 
 const Vehicle = () => {
   const [vehicles, setVehicles] = useState([
@@ -64,6 +65,7 @@ const Vehicle = () => {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th></th>
               <th><FaCar /> Biển số</th>
               <th>Loại xe</th>
               <th>Chủ sở hữu</th>
@@ -75,6 +77,7 @@ const Vehicle = () => {
           <tbody>
             {vehicles.map((v) => (
               <tr key={v.id}>
+                <td>{v.id}</td>
                 <td>{v.licensePlate}</td>
                 <td>{v.type}</td>
                 <td>{v.owner}</td>
@@ -107,6 +110,9 @@ const Vehicle = () => {
           </tbody>
         </table>
       </div>
+
+      <Pagination/>
+
     </div>
   );
 };

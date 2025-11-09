@@ -5,7 +5,6 @@ import Users from '../pages/users/Users';
 import Vehicles from '../pages/vehicles/Vehicles';
 import TollStations from '../pages/tollstations/Tollstations';
 import Transactions from '../pages/transactions/Transactions';
-import Reports from '../pages/reports/Reports';
 
 
 const publicRouter = [
@@ -18,7 +17,6 @@ const adminRouter = [
     {path: '/vehicles', element: <Vehicles/>},
     {path: '/tollstations', element: <TollStations/>},
     {path: '/transactions', element: <Transactions/>},
-    {path: '/reports', element: <Reports/>},
 
 ]
 

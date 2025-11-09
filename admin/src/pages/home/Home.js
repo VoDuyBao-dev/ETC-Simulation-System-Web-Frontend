@@ -1,14 +1,25 @@
 import React from "react";
-import "./Home.scss";
+import styles from "./Home.module.scss";
+import StatsCards from "../../components/dashboard/statsCard/StatsCards";
+import LineChart from "../../components/dashboard/charts/LineChart";
+import BarChart from "../../components/dashboard/charts/BarChart";
+import ErrorTransactionsTable from "../../components/dashboard/tables/tables"
 
-const Dashboard = () => {
+export default function Home() {
   return (
-    <div className="dashboard">
-      <h2>Network Activities</h2>
-      <p>Graph title sub-title</p>
-      <div className="graph-placeholder">[Biểu đồ ở đây]</div>
+    <div className={styles.dashboard}>
+      <StatsCards />
+      <div className={styles.cardLarge}>
+        <LineChart />
+      </div>
+      <div className={styles.row}>
+        <div className={styles.cardLarge}>
+          <BarChart />
+        </div>
+        <div className={styles.card}>
+          <ErrorTransactionsTable/>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
