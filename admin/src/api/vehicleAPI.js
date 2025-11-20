@@ -1,78 +1,130 @@
 // src/api/vehicleAPI.js
 import { BASE_URL } from "./index";
 
-// Lấy danh sách phương tiện
-export const getVehicles = async () => {
-  try {
-    const res = await fetch(`${BASE_URL}/vehicles`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        // Nếu backend dùng JWT:
-        // "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-    });
+const getToken = () => localStorage.getItem("token")?.trim();
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Không thể lấy dữ liệu phương tiện");
-    return data; // [{id, licensePlate, type, owner, rfid, active}, ...]
-  } catch (err) {
-    throw err;
-  }
+/**
+ * Helper parse JSON an toàn
+ */
+const parseJSON = async (res) => {
+  const text = await res.text();
+  let data = {};
+  try {
+    data = JSON.parse(text);
+  } catch {}
+  return data;
 };
 
-// Thêm phương tiện mới
+/**
+ * Lấy danh sách phương tiện phân trang
+ * @param {number} page - số trang (1-based)
+ * @param {number} size - số item/trang
+ */
+export const getVehicles = async (page = 1, size = 5) => {
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
+
+  const res = await fetch(`${BASE_URL}/admin/vehicles?page=${page}&size=${size}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await parseJSON(res);
+
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
+  }
+
+  if (!res.ok) throw new Error(data.message || "Không thể tải danh sách phương tiện");
+
+  return data; // { content: [...], page, size, totalElements, totalPages }
+};
+
+/**
+ * Thêm phương tiện mới
+ * @param {object} vehicle - { name, type, plate, ... }
+ */
 export const addVehicle = async (vehicle) => {
-  try {
-    const res = await fetch(`${BASE_URL}/vehicles`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(vehicle),
-    });
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Không thể thêm phương tiện");
-    return data;
-  } catch (err) {
-    throw err;
+  const res = await fetch(`${BASE_URL}/admin/vehicles`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(vehicle),
+  });
+
+  const data = await parseJSON(res);
+
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
   }
+
+  if (!res.ok) throw new Error(data.message || "Thêm phương tiện thất bại");
+
+  return data; // { id, name, type, ... }
 };
 
-// Xóa phương tiện
+/**
+ * Xóa phương tiện
+ * @param {number|string} id - vehicleId
+ */
 export const deleteVehicle = async (id) => {
-  try {
-    const res = await fetch(`${BASE_URL}/vehicles/${id}`, {
-      method: "DELETE",
-    });
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
 
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Xóa thất bại");
-    }
+  const res = await fetch(`${BASE_URL}/admin/vehicles/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    return true;
-  } catch (err) {
-    throw err;
+  if (!res.ok) {
+    const data = await parseJSON(res);
+    throw new Error(data.message || "Xóa thất bại");
   }
+
+  return true;
 };
 
-// Khóa / mở khóa phương tiện
-export const toggleVehicleActive = async (id, active) => {
-  try {
-    const res = await fetch(`${BASE_URL}/vehicles/${id}/toggle-active`, {
-      method: "PUT",
-    });
+/**
+ * Cập nhật trạng thái phương tiện
+ * @param {number|string} id - vehicleId
+ * @param {boolean} status- true: active, false: locked
+ */
+export const updateVehicleStatus = async (id, active) => {
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
 
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Thay đổi trạng thái thất bại");
-    }
+  const status = active ? "ACTIVE" : "INACTIVE";
 
-    const data = await res.json();
-    return data; // {id, active: true/false}
-  } catch (err) {
-    throw err;
+  const res = await fetch(`${BASE_URL}/admin/vehicles/${id}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const data = await parseJSON(res);
+
+  if (!res.ok) {
+    console.warn("Backend message:", data);
+    throw new Error(data.message || "Cập nhật trạng thái thất bại");
   }
+
+  return data;
 };

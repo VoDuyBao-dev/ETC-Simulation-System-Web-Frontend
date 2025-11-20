@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
+import { 
+  Chart as ChartJS, 
+  LineElement, 
+  CategoryScale, 
+  LinearScale, 
+  PointElement,
+  Filler // <-- import Filler plugin
+} from "chart.js";
 import styles from "./Charts.module.scss";
 import { getLineChartData } from "~/api/homeAPI";
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Filler); // <-- đăng ký Filler
 
 export default function LineChart() {
   const [chartData, setChartData] = useState({ labels: [], data: [] });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,18 +24,22 @@ export default function LineChart() {
         setChartData(data);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
+  if (loading) return <div className={styles.chartBox}>Đang tải biểu đồ...</div>;
+
   const data = {
     labels: chartData.labels,
     datasets: [
       {
-        label: "Biểu đồ doanh thu",
+        label: "Doanh thu (VNĐ)",
         data: chartData.data,
-        fill: true,
+        fill: true, // bây giờ fill sẽ hoạt động
         borderColor: "#38b2ac",
         backgroundColor: "rgba(56, 178, 172, 0.2)",
         tension: 0.4,
@@ -35,7 +47,12 @@ export default function LineChart() {
     ],
   };
 
-  const options = { responsive: true, plugins: { legend: { display: false } } };
+  const options = { 
+    responsive: true,
+    plugins: { 
+      legend: { display: false } 
+    } 
+  };
 
   return (
     <div className={styles.chartBox}>

@@ -9,9 +9,9 @@ export default function ErrorTransactionsTable() {
     const fetchData = async () => {
       try {
         const data = await getErrorTransactions();
-        setTransactions(data);
-      } catch (err) {
-        console.error(err);
+        setTransactions(data || []);
+      } catch (err) {   
+        console.error("Lỗi khi tải giao dịch lỗi:", err);
       }
     };
     fetchData();
@@ -19,9 +19,8 @@ export default function ErrorTransactionsTable() {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "Lỗi xác thực": return styles.pending;
-      case "GD bị lỗi": return styles.processing;
-      case "Đéo đủ tiền": return styles.error;
+      case "ERROR": return styles.error;
+      case "FAILED_BALANCE": return styles.pending;
       default: return "";
     }
   };
@@ -29,25 +28,37 @@ export default function ErrorTransactionsTable() {
   return (
     <div className={styles.tableWrapper}>
       <h2 className={styles.title}>Giao dịch lỗi gần đây</h2>
-      <div className={styles.scrollAre}>
+      <div className={styles.scrollArea}>
         <table className={styles.table}>
           <thead>
             <tr>
               <th>Trạm thu phí</th>
-              <th>Phương tiện</th>
+              <th>Biển số</th>
               <th>Thời gian</th>
               <th>Trạng thái</th>
             </tr>
           </thead>
           <tbody>
-            {transactions.map((t, i) => (
-              <tr key={i}>
-                <td>{t.station}</td>
-                <td>{t.vehicle}</td>
-                <td>{t.time}</td>
-                <td><span className={`${styles.status} ${getStatusClass(t.status)}`}>{t.status}</span></td>
+            {transactions.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: "center", padding: 20 }}>
+                  Không có giao dịch lỗi
+                </td>
               </tr>
-            ))}
+            ) : (
+              transactions.map((t) => (
+                <tr key={t.transactionId}>
+                  <td>{t.stationCode}</td>
+                  <td>{t.plateNumber}</td>
+                  <td>{new Date(t.occurredAt).toLocaleString()}</td>
+                  <td>
+                    <span className={`${styles.status} ${getStatusClass(t.status)}`}>
+                      {t.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

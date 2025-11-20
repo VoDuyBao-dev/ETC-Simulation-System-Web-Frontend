@@ -2,60 +2,68 @@ import React, { useEffect, useState } from "react";
 import styles from "./Vehicle.module.scss";
 import { FaTrash, FaCar, FaIdCard, FaLock, FaUnlock } from "react-icons/fa";
 import Pagination from "../../components/pagination/pagination";
-import { getVehicles, deleteVehicle, toggleVehicleActive } from "../../api/vehicleAPI";
+import { getVehicles, deleteVehicle, updateVehicleStatus } from "../../api/vehicleAPI";
 
 const Vehicle = () => {
   const [vehicles, setVehicles] = useState([]);
+  const [page, setPage] = useState(0); // 1-based page
+  const [size] = useState(5);          // items per page
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // === Lấy danh sách phương tiện từ backend khi load page ===
+  // === Lấy danh sách phương tiện theo trang ===
+  const fetchVehicles = async (pageNumber = 0) => {
+    setLoading(true);
+    try {
+      const data = await getVehicles(pageNumber, size);
+      setVehicles(data.content);
+      setPage(data.page);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      alert("Lỗi khi tải danh sách phương tiện: " + err.message);
+      setVehicles([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const data = await getVehicles();
-        setVehicles(data);
-      } catch (err) {
-        alert("Lỗi khi tải danh sách phương tiện: " + err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVehicles();
-  }, []);
+    fetchVehicles(page);
+  }, [page]);
 
   // === Xóa phương tiện ===
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa phương tiện này không?")) return;
+  const handleDelete = async (id, plateNumber) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa phương tiện ${plateNumber} không?`)) return;
 
     try {
       await deleteVehicle(id);
-      setVehicles(vehicles.filter((v) => v.id !== id));
       alert("Xóa thành công!");
+      fetchVehicles(page);
     } catch (err) {
       alert("Xóa thất bại: " + err.message);
     }
   };
 
   // === Khóa / mở khóa phương tiện ===
-  const handleToggleActive = async (id) => {
-    const vehicle = vehicles.find((v) => v.id === id);
-    if (!vehicle) return;
-    if (!window.confirm("Bạn có chắc muốn thay đổi trạng thái phương tiện này không?")) return;
+  const handleToggleStatus = async (id, status, plateNumber) => {
+    const isActive = status === "ACTIVE";
+    if (!window.confirm(`Bạn có chắc muốn ${isActive ? "dừng" : "mở"} hoạt động phương tiện ${plateNumber} không?`)) return;
 
     try {
-      const updated = await toggleVehicleActive(id, vehicle.active);
-      setVehicles(
-        vehicles.map((v) =>
-          v.id === id ? { ...v, active: updated.active } : v
+      const updated = await updateVehicleStatus(id, !isActive);
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === id ? { ...v, status: updated.status } : v
         )
       );
-      alert(`Phương tiện ${vehicle.licensePlate} đã chuyển sang trạng thái ${updated.active ? "Hoạt động" : "Dừng hoạt động"} thành công!`);
+      alert(`Phương tiện ${plateNumber} đã chuyển sang trạng thái ${updated.status === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"} thành công!`);
     } catch (err) {
       alert("Thay đổi trạng thái thất bại: " + err.message);
     }
   };
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
+  if (!vehicles.length) return <p>Chưa có phương tiện nào.</p>;
 
   return (
     <div className={styles.vehiclePage}>
@@ -63,12 +71,11 @@ const Vehicle = () => {
         <h2>Quản lý Phương tiện</h2>
       </div>
 
-      {/* ===== Bảng phương tiện ===== */}
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th></th>
+              <th>ID</th>
               <th><FaCar /> Biển số</th>
               <th>Loại xe</th>
               <th>Chủ sở hữu</th>
@@ -78,33 +85,40 @@ const Vehicle = () => {
             </tr>
           </thead>
           <tbody>
-            {vehicles.map((v) => (
-              <tr key={v.id}>
-                <td>{v.id}</td>
-                <td>{v.licensePlate}</td>
-                <td>{v.type}</td>
-                <td>{v.owner}</td>
-                <td>{v.rfid}</td>
-                <td>
-                  <span className={`${styles.status} ${v.active ? styles.active : styles.stopped}`}>
-                    {v.active ? "Hoạt động" : "Dừng hoạt động"}
-                  </span>
-                </td>
-                <td className={styles.actions}>
-                  <button className={styles.deleteBtn} onClick={() => handleDelete(v.id)}>
-                    <FaTrash />
-                  </button>
-                  <button className={styles.lockBtn} onClick={() => handleToggleActive(v.id)}>
-                    {v.active ? <FaUnlock /> : <FaLock />}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {vehicles.map((v) => {
+              const isActive = v.status === "ACTIVE";
+              return (
+                <tr key={v.id}>
+                  <td>{v.id}</td>
+                  <td>{v.plateNumber}</td>
+                  <td>{v.vehicleType}</td>
+                  <td>{v.fullName}</td>
+                  <td>{v.rfidUid}</td>
+                  <td>
+                    <span className={`${styles.status} ${isActive ? styles.active : styles.stopped}`}>
+                      {isActive ? "Hoạt động" : "Dừng hoạt động"}
+                    </span>
+                  </td>
+                  <td className={styles.actions}>
+                    <button className={styles.deleteBtn} onClick={() => handleDelete(v.id, v.plateNumber)}>
+                      <FaTrash />
+                    </button>
+                    <button className={styles.lockBtn} onClick={() => handleToggleStatus(v.id, v.status, v.plateNumber)}>
+                      {isActive ? <FaUnlock /> : <FaLock />}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      <Pagination />
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
     </div>
   );
 };

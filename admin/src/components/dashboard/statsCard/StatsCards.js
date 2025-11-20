@@ -10,21 +10,37 @@ export default function StatsCards() {
     { title: "Người dùng", value: "0", change: "+0%", img: usersImg },
     { title: "Phương tiện", value: "0", change: "+0%", img: vehiclesImg },
     { title: "Trạm thu phí", value: "0", change: "+0%", img: tollstationsImg },
-  ]);
+  ]);   
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await getStats();
+        const summary = await getStats(); // summary từ API
         setStats([
-          { title: "Người dùng", value: data.users.toLocaleString(), change: "+14%", img: usersImg },
-          { title: "Phương tiện", value: data.vehicles.toLocaleString(), change: "+5%", img: vehiclesImg },
-          { title: "Trạm thu phí", value: data.tollstations.toLocaleString(), change: "+7%", img: tollstationsImg },
+          {
+            title: "Người dùng",
+            value: (summary.totalUsers || 0).toLocaleString(),
+            change: "+14%", // có thể tính động nếu muốn
+            img: usersImg
+          },
+          {
+            title: "Phương tiện",
+            value: (summary.totalVehicles || 0).toLocaleString(),
+            change: "+5%",
+            img: vehiclesImg
+          },
+          {
+            title: "Trạm thu phí",
+            value: (summary.totalStations || 0).toLocaleString(),
+            change: "+7%",
+            img: tollstationsImg
+          },
         ]);
       } catch (err) {
-        console.error(err);
+        console.error("Lỗi khi tải stats:", err);
       }
     };
+
     fetchStats();
   }, []);
 

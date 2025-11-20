@@ -1,44 +1,38 @@
-import React, {useState} from "react";
+import React from "react";
 import styles from "./pagination.module.scss";
 
-const Pagination = () => {
-    const [list] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const perPage = 3;
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
 
-    const totalPages = Math.ceil(list.length / perPage);
-    const indexOfLast = currentPage * perPage;
-    const indexOfFirst = indexOfLast - perPage;
+  const pages = [...Array(totalPages)].map((_, i) => i + 1);
 
-    const handleNext = () => {
-        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-    };
+  return (
+    <div className={styles.pagination}>
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Prev
+      </button>
 
-    const handlePrev = () => {
-        if (currentPage > 1) setCurrentPage(currentPage - 1);
-    };
+      {pages.map((page) => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={page === currentPage ? styles.active : ""}
+        >
+          {page}
+        </button>
+      ))}
 
-    return (
-        <div className={styles["pagination"]}>
-            <button onClick={handlePrev} disabled={currentPage === 1}>
-            &laquo; Trước
-            </button>
-
-            {Array.from({ length: totalPages }, (_, index) => (
-            <button
-                key={index}
-                onClick={() => setCurrentPage(index + 1)}
-                className={currentPage === index + 1 ? "active" : ""}
-            >
-                {index + 1}
-            </button>
-            ))}
-
-            <button onClick={handleNext} disabled={currentPage === totalPages}>
-            Sau &raquo;
-            </button>
-        </div>
-    )
-}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </div>
+  );
+};
 
 export default Pagination;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect} from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.scss";
 import {
@@ -17,6 +17,19 @@ const Sidebar = () => {
     { title: "Trạm thu phí", path: "/tollstations", icon: <FaMapMarkedAlt /> },
     { title: "Giao dịch thu phí", path: "/transactions", icon: <FaMoneyBill /> },
   ];
+    const [username, setUsername] = useState("Admin");
+  
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          setUsername(payload.username || "Admin");
+        } catch {
+          setUsername("Admin");
+        }
+      }
+    }, []);
 
   return (
     <aside className={styles.sidebar}>
@@ -34,7 +47,7 @@ const Sidebar = () => {
         />
         <div className={styles.userInfo}>
           <span>Welcome,</span>
-          <h4>John Doe</h4>
+          <h4>{username}</h4>
         </div>
       </div>
 

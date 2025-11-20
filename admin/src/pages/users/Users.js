@@ -1,18 +1,25 @@
-import React, { useEffect, useState, useCallback } from "react";
+// src/pages/users/Users.js
+import React, { useState, useEffect, useCallback } from "react";
 import styles from "./Users.module.scss";
-import { FaTrash, FaLock, FaUnlock } from "react-icons/fa";
+import { FaLock, FaUnlock } from "react-icons/fa";
 import Pagination from "../../components/pagination/pagination";
-import { getUsers, deleteUser, toggleUserActive } from "../../api/userAPI";
+import { getUsers, updateUserStatus } from "../../api/userAPI";
 
-const User = () => {
+const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 5;
 
-  const fetchUsers = useCallback(async () => {
+  // --- Fetch users ---
+  const fetchUsers = useCallback(async (page) => {
     setLoading(true);
     try {
-      const data = await getUsers();
-      setUsers(data);
+      const data = await getUsers(page - 1, pageSize); // backend 0-based page
+      setUsers(data.content || []);
+      setTotalPages(data.totalPages || 1);
     } catch (err) {
       alert("Lỗi khi tải người dùng: " + err.message);
     } finally {
@@ -21,28 +28,22 @@ const User = () => {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(currentPage);
+  }, [fetchUsers, currentPage]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa người dùng này?")) return;
-    try {
-      await deleteUser(id);
-      setUsers(users.filter((u) => u.id !== id));
-      alert("Xóa người dùng thành công!");
-    } catch (err) {
-      alert("Xóa thất bại: " + err.message);
-    }
-  };
+  // --- Toggle Active/Inactive ---
+  const handleToggleActive = async (userId, isActive) => {
+    if (!window.confirm(`Bạn có chắc muốn ${isActive ? "khóa" : "mở khóa"} người dùng này?`)) return;
 
-  const handleToggleActive = async (id, active) => {
-    if (!window.confirm("Bạn có chắc muốn thay đổi trạng thái người dùng này?")) return;
+    setActionLoading(true);
     try {
-      await toggleUserActive(id, !active);
-      setUsers(users.map((u) => (u.id === id ? { ...u, active: !active } : u)));
-      alert(`Người dùng đã được ${active ? "mở khóa" : "khóa"} thành công!`);
+      const updatedUser = await updateUserStatus(userId, isActive ? "BLOCKED" : "ACTIVE");
+      setUsers(users.map(u => u.userId === userId ? { ...u, status: updatedUser.status } : u));
+      alert(`Người dùng đã được ${isActive ? "khóa" : "mở khóa"} thành công!`);
     } catch (err) {
       alert("Cập nhật thất bại: " + err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -55,66 +56,63 @@ const User = () => {
       {loading ? (
         <p>Đang tải dữ liệu...</p>
       ) : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.userTable}>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Tên</th>
-                <th>Email</th>
-                <th>Quyền</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
+        <>
+          <div className={styles.tableWrapper}>
+            <table className={styles.userTable}>
+              <thead>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: 20 }}>
-                    Không có người dùng
-                  </td>
+                  <th></th>
+                  <th>Họ và tên</th>
+                  <th>Email</th>
+                  <th>Quyền</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
-              ) : (
-                users.map((u, index) => (
-                  <tr key={u.id}>
-                    <td>{index + 1}</td>
-                    <td>{u.name}</td>
-                    <td>{u.email}</td>
-                    <td>{u.role}</td>
-                    <td>
-                      <span
-                        className={`${styles.status} ${
-                          u.active ? styles.active : styles.inactive
-                        }`}
-                      >
-                        {u.active ? "Hoạt động" : "Đã khóa"}
-                      </span>
-                    </td>
-                    <td className={styles.actions}>
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => handleDelete(u.id)}
-                      >
-                        <FaTrash />
-                      </button>
-                      <button
-                        className={styles.lockBtn}
-                        onClick={() => handleToggleActive(u.id, u.active)}
-                      >
-                        {u.active ? <FaUnlock /> : <FaLock />}
-                      </button>
+              </thead>
+              <tbody>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: 20 }}>
+                      Không có người dùng
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ) : (
+                  users.map((u, index) => (
+                    <tr key={u.userId}>
+                      <td>{index + 1 + (currentPage - 1) * pageSize}</td>
+                      <td>{u.fullname}</td>
+                      <td>{u.email}</td>
+                      <td>{u.roles[0]}</td>
+                      <td>
+                        <span className={`${styles.status} ${u.status === "ACTIVE" ? styles.active : styles.inactive}`}>
+                          {u.status === "ACTIVE" ? "Hoạt động" : "Đã khóa"}
+                        </span>
+                      </td>
+                      <td className={styles.actions}>
+                        <button
+                          className={styles.lockBtn}
+                          onClick={() => handleToggleActive(u.userId, u.status === "ACTIVE")}
+                          disabled={actionLoading}
+                        >
+                          {u.status === "ACTIVE" ? <FaUnlock /> : <FaLock />}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      <Pagination />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
     </div>
   );
 };
 
-export default User;
+export default Users;

@@ -1,43 +1,80 @@
+// src/api/userAPI.js
 import { BASE_URL } from "./index";
 
-// Lấy danh sách người dùng
-export const getUsers = async () => {
+const getToken = () => localStorage.getItem("token")?.trim();
+
+/**
+ * Lấy danh sách người dùng theo trang
+ * @param {number} page - số trang (0-based)
+ * @param {number} size - số user/trang
+ * @returns {Promise<{content: Array, page: number, size: number, totalElements: number, totalPages: number}>}
+ */
+export const getUsers = async (page = 0, size = 5) => {
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
+
+  const res = await fetch(`${BASE_URL}/admin/manager-users?page=${page}&size=${size}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const text = await res.text();
+  let data = {};
   try {
-    const res = await fetch(`${BASE_URL}/users`, {
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error("Không thể tải danh sách người dùng");
-    return await res.json(); // giả sử backend trả về [{id, name, email, role, active}]
-  } catch (err) {
-    throw err;
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Backend không trả JSON hợp lệ");
   }
+
+  // Nếu 401 → token hết hạn → logout FE
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
+    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
+  }
+
+  if (!res.ok) throw new Error(data.message || "Không thể tải danh sách người dùng");
+
+  return data; // FE sẽ nhận { content, page, size, totalElements, totalPages }
 };
 
-// Xóa người dùng
-export const deleteUser = async (id) => {
-  try {
-    const res = await fetch(`${BASE_URL}/users/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error("Xóa người dùng thất bại");
-    return await res.json();
-  } catch (err) {
-    throw err;
-  }
-};
+/**
+ * Cập nhật trạng thái người dùng
+ * @param {number|string} id - userId
+ * @param {string} status - "ACTIVE" | "BLOCKED"
+ * @returns {Promise<object>}
+ */
+export const updateUserStatus = async (id, status) => {
+  const token = getToken();
+  if (!token) throw new Error("Bạn chưa đăng nhập");
 
-// Khóa / mở khóa người dùng
-export const toggleUserActive = async (id, active) => {
+  const res = await fetch(`${BASE_URL}/admin/manager-users/${id}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const text = await res.text();
+  let data = {};
   try {
-    const res = await fetch(`${BASE_URL}/users/${id}/toggle`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ active }),
-    });
-    if (!res.ok) throw new Error("Cập nhật trạng thái thất bại");
-    return await res.json();
-  } catch (err) {
-    throw err;
+    data = JSON.parse(text);
+  } catch {}
+
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
+    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
   }
+
+  if (!res.ok) throw new Error(data.message || "Cập nhật trạng thái thất bại");
+
+  return data;
 };

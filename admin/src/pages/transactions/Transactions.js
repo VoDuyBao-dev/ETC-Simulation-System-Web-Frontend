@@ -1,25 +1,29 @@
-import React, { useState, useEffect, useCallback } from "react";
+// src/pages/transactions/Transactions.js
+import React, { useState, useEffect } from "react";
 import styles from "./Transactions.module.scss";
 import { FaSearch, FaFileExport, FaMoneyBillWave, FaClock, FaMapMarkedAlt } from "react-icons/fa";
 import Pagination from "../../components/pagination/pagination";
-import { getTransactions } from "../../api/transactionAPI";
+import { getTransactionsWithFilter } from "../../api/transactionAPI";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [filter, setFilter] = useState({
-    station: "Tất cả",
+    stationName: "", // filter theo trạm
     dateFrom: "",
     dateTo: "",
   });
 
-  // Lấy dữ liệu từ backend
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getTransactions(filter);
-      setTransactions(data);
+      const data = await getTransactionsWithFilter(filter, page, size);
+      setTransactions(data.content);
+      setTotalPages(data.totalPages);
     } catch (err) {
       alert("Lỗi khi tải dữ liệu: " + err.message);
     } finally {
@@ -27,49 +31,45 @@ const Transactions = () => {
     }
   };
 
-  // Khi filter thay đổi, reload data
   useEffect(() => {
     fetchData();
-  }, [filter]);
+  }, [page, size]); // gọi lại khi đổi page hoặc size
 
-  const stations = useCallback(() => {
-    const s = Array.from(new Set(transactions.map((t) => t.station)));
-    return ["Tất cả", ...s];
-  }, [transactions]);
+  // Danh sách trạm từ data hiện tại
+  const stations = ["Tất cả", ...Array.from(new Set(transactions.map(t => t.stationName)))];
 
-  const filtered = useCallback(() => {
-    return transactions; // backend đã filter
-  }, [transactions]);
-
-  const stats = useCallback(() => {
-    const totalAmount = filtered.reduce((s, x) => s + (x.amount || 0), 0);
-    return { count: filtered.length, totalAmount };
-  }, [filtered]);
+  // Tổng hợp stats
+  const stats = {
+    count: transactions.length,
+    totalAmount: transactions.reduce((sum, t) => sum + (t.amount || 0), 0),
+  };
 
   const handleSearch = (e) => {
     e?.preventDefault?.();
+    setPage(0); // reset về trang 0 khi filter
     fetchData();
   };
 
   const handleExport = () => {
-    if (!filtered.length) return alert("Không có dữ liệu để xuất.");
-    const header = ["ID", "Trạm", "Biển số", "Số tiền", "Thời gian"];
-    const rows = filtered.map((r) => [
-      r.id,
-      r.station,
-      r.vehicle,
+    if (!transactions.length) return alert("Không có dữ liệu để xuất.");
+    const header = ["STT", "Trạm", "Biển số", "Số tiền", "Thời gian"];
+    const rows = transactions.map((r, i) => [
+      i + 1,
+      r.stationName,
+      r.plateNumber,
       r.amount,
-      new Date(r.time).toLocaleString(),
+      new Date(r.date).toLocaleString(),
     ]);
 
     const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\n");
+
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const filename = `transactions_${filter.station === "Tất cả" ? "all" : filter.station}_${filter.dateFrom || "from"}_${filter.dateTo || "to"}.csv`;
+    const filename = `transactions_${filter.stationName || "all"}_${filter.dateFrom || "from"}_${filter.dateTo || "to"}.csv`;
     a.setAttribute("download", filename);
     document.body.appendChild(a);
     a.click();
@@ -88,10 +88,12 @@ const Transactions = () => {
           <div className={styles.filterGroup}>
             <label>Trạm</label>
             <select
-              value={filter.station}
-              onChange={(e) => setFilter({ ...filter, station: e.target.value })}
+              value={filter.stationName}
+              onChange={(e) => setFilter({ ...filter, stationName: e.target.value === "Tất cả" ? "" : e.target.value })}
             >
-              {stations.map((s) => <option key={s} value={s}>{s}</option>)}
+              {stations.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
             </select>
           </div>
 
@@ -135,7 +137,7 @@ const Transactions = () => {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th></th>
+              <th>STT</th>
               <th><FaMapMarkedAlt /> Trạm</th>
               <th><FaMoneyBillWave /> Số tiền (VNĐ)</th>
               <th>Biển số xe</th>
@@ -143,16 +145,20 @@ const Transactions = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan="5" style={{ textAlign: "center", padding: 20 }}>Không có giao dịch theo bộ lọc</td></tr>
+            {transactions.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
+                  Không có giao dịch theo bộ lọc
+                </td>
+              </tr>
             ) : (
-              filtered.map((t, i) => (
-                <tr key={t.id}>
+              transactions.map((t, i) => (
+                <tr key={i}>
                   <td>{i + 1}</td>
-                  <td>{t.station}</td>
+                  <td>{t.stationName}</td>
                   <td>{t.amount.toLocaleString()}</td>
-                  <td>{t.vehicle}</td>
-                  <td>{new Date(t.time).toLocaleString()}</td>
+                  <td>{t.plateNumber}</td>
+                  <td>{new Date(t.date).toLocaleString()}</td>
                 </tr>
               ))
             )}
@@ -160,7 +166,7 @@ const Transactions = () => {
         </table>
       </div>
 
-      <Pagination/>
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage}/>
     </div>
   );
 };

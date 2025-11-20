@@ -1,51 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.scss";
 import { FaEnvelope } from "react-icons/fa";
 import Notification from "./headerComp/notification/Notification";
+import Dropdown from "./headerComp/Dropdown/Dropdown";
+import { logout } from "../../../api/logoutAPI";
 
 const Header = () => {
+  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [username, setUsername] = useState("Admin");
 
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    setShowUserMenu(false);
-  };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUsername(payload.username || "Admin");
+      } catch {
+        setUsername("Admin");
+      }
+    }
+  }, []);
 
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-    setShowNotifications(false);
-  };
+  const toggleNotifications = () => setShowNotifications(prev => !prev);
+
+const handleLogout = async () => {
+  const token = localStorage.getItem("token");
+  try {
+    const data = await logout(token);
+    alert(data.message || "Đã logout thành công");
+    navigate("/login");
+  } catch (err) {
+    alert(err.message || "Logout thất bại");
+    navigate("/login"); // vẫn chuyển về login
+  }
+};
+
+
 
   return (
     <header className={styles.mainHeader}>
-
-      {/* === Phần bên phải (mail + avatar + dropdown) === */}
       <div className={styles.headerRight}>
-        {/* Icon thư có badge */}
         <div className={styles.mailIcon} onClick={toggleNotifications}>
           <FaEnvelope />
           <span className={styles.badge}>6</span>
           {showNotifications && <Notification />}
         </div>
 
-        {/* Menu người dùng (avatar + tên + dropdown) */}
-        <div className={styles.userMenu}>
-          {/* === Avatar thật (giống sidebar) === */}
-          <img
-            src="https://i.pravatar.cc/50"
-            alt="User Avatar"
-            className={styles.avatarImg}
-          />
-          <span className={styles.username}>John Doe</span>
-
-          {/* Dropdown menu */}
-          <div className={styles.dropdown} onClick={toggleUserMenu}>
-            <ul> 
-              <li>Đăng xuất</li>
-            </ul>
-          </div>
-        </div>
+        <Dropdown username={username} onLogout={handleLogout} />
       </div>
     </header>
   );
