@@ -16,18 +16,16 @@ const parseJSON = async (res) => {
 };
 
 /**
- * Lấy danh sách phương tiện phân trang
- * @param {number} page - số trang (1-based)
- * @param {number} size - số item/trang
+ * Lấy danh sách phương tiện
+ * @returns {Promise<Array>} result là mảng phương tiện
  */
-export const getVehicles = async (page = 1, size = 5) => {
+export const getVehicles = async () => {
   const token = getToken();
   if (!token) throw new Error("Bạn chưa đăng nhập");
 
-  const res = await fetch(`${BASE_URL}/admin/vehicles?page=${page}&size=${size}`, {
+  const res = await fetch(`${BASE_URL}/admin/vehicles`, {
     method: "GET",
     headers: {
-      "Content-Type": "application/json",
       "Accept": "application/json",
       Authorization: `Bearer ${token}`,
     },
@@ -42,12 +40,13 @@ export const getVehicles = async (page = 1, size = 5) => {
 
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách phương tiện");
 
-  return data; // { content: [...], page, size, totalElements, totalPages }
+  return data.result || [];
 };
 
 /**
  * Thêm phương tiện mới
  * @param {object} vehicle - { name, type, plate, ... }
+ * @returns {Promise<object>} phương tiện vừa thêm
  */
 export const addVehicle = async (vehicle) => {
   const token = getToken();
@@ -72,12 +71,13 @@ export const addVehicle = async (vehicle) => {
 
   if (!res.ok) throw new Error(data.message || "Thêm phương tiện thất bại");
 
-  return data; // { id, name, type, ... }
+  return data.result || {};
 };
 
 /**
  * Xóa phương tiện
  * @param {number|string} id - vehicleId
+ * @returns {Promise<boolean>}
  */
 export const deleteVehicle = async (id) => {
   const token = getToken();
@@ -92,7 +92,7 @@ export const deleteVehicle = async (id) => {
 
   if (!res.ok) {
     const data = await parseJSON(res);
-    throw new Error(data.message || "Xóa thất bại");
+    throw new Error(data.message || "Xóa phương tiện thất bại");
   }
 
   return true;
@@ -101,7 +101,8 @@ export const deleteVehicle = async (id) => {
 /**
  * Cập nhật trạng thái phương tiện
  * @param {number|string} id - vehicleId
- * @param {boolean} status- true: active, false: locked
+ * @param {boolean} active - true: ACTIVE, false: INACTIVE
+ * @returns {Promise<object>} phương tiện đã cập nhật
  */
 export const updateVehicleStatus = async (id, active) => {
   const token = getToken();
@@ -113,7 +114,7 @@ export const updateVehicleStatus = async (id, active) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json",
+      "Accept": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ status }),
@@ -122,9 +123,8 @@ export const updateVehicleStatus = async (id, active) => {
   const data = await parseJSON(res);
 
   if (!res.ok) {
-    console.warn("Backend message:", data);
     throw new Error(data.message || "Cập nhật trạng thái thất bại");
   }
 
-  return data;
+  return data.result || {};
 };

@@ -17,41 +17,41 @@ const statusMap = {
   INACTIVE: "Dừng hoạt động",
 };
 
-const reverseStatusMap = {
-  "Hoạt động": "ACTIVE",
-  "Bảo trì": "MAINTENANCE",
-  "Dừng hoạt động": "INACTIVE",
-};
-
 const TollStationPage = () => {
   const [stations, setStations] = useState([]);
   const [statistics, setStatistics] = useState({});
-  const [page, setPage] = useState(0);
-  const [size] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1); // 1-based page
+  const [size] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [form, setForm] = useState({ id: null, name: "", address: "", status: "ACTIVE", lat: "", lng: "" });
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState("Tất cả");
   const [selectedMap, setSelectedMap] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // ==== Lấy dữ liệu
-  const fetchStations = async (pageNumber = 1) => {
+  const fetchStations = async () => {
+    setLoading(true);
     try {
-      const data = await getStations(pageNumber, size);
-      setStations(data.content);
-      setPage(data.page);
-      setTotalPages(data.totalPages);
+      const data = await getStations();
+      // đảm bảo stations là array
+      const list = Array.isArray(data) ? data : data.content || [];
+      setStations(list);
+      setTotalPages(Math.ceil(list.length / size));
     } catch (err) {
       console.error("Failed to fetch stations:", err);
       setStations([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchStatistics = async () => {
     try {
       const stats = await getStationStatistics();
-      setStatistics(stats);
+      setStatistics(stats || {});
     } catch (err) {
       console.error("Failed to fetch statistics:", err);
       setStatistics({});
@@ -59,9 +59,20 @@ const TollStationPage = () => {
   };
 
   useEffect(() => {
-    fetchStations(page);
+    fetchStations();
     fetchStatistics();
-  }, [page]);
+  }, []);
+
+  // ==== Phân trang frontend
+  const pagedStations = stations
+    .filter((s) => {
+      if (filter === "Tất cả") return true;
+      if (filter === "Hoạt động") return s.status === "ACTIVE";
+      if (filter === "Bảo trì") return s.status === "MAINTENANCE";
+      if (filter === "Dừng hoạt động") return s.status === "INACTIVE";
+      return true;
+    })
+    .slice((page - 1) * size, page * size);
 
   // ==== Form submit
   const handleSubmit = async (e) => {
@@ -70,14 +81,16 @@ const TollStationPage = () => {
       const payload = {
         name: form.name,
         address: form.address,
+        status: form.status,
         latitude: form.lat,
         longitude: form.lng,
-        status: form.status, // backend value
+        
       };
       if (form.id) {
         await updateStation(form.id, payload);
+        await updateStationStatus(form.id, form.status);
       } else {
-        await addStation(payload);
+        await addStation({ ...payload, status: form.status });
       }
       resetForm();
       fetchStations(page);
@@ -104,7 +117,7 @@ const TollStationPage = () => {
     if (!window.confirm("Bạn có chắc muốn xóa trạm này không?")) return;
     try {
       await deleteStation(id);
-      fetchStations(page);
+      fetchStations();
       fetchStatistics();
     } catch (err) {
       console.error("Failed to delete station:", err);
@@ -117,7 +130,7 @@ const TollStationPage = () => {
 
     try {
       await updateStationStatus(station.id, newStatus);
-      fetchStations(page);
+      fetchStations();
       fetchStatistics();
     } catch (err) {
       console.error("Failed to update status:", err);
@@ -129,12 +142,7 @@ const TollStationPage = () => {
     setShowForm(false);
   };
 
-  const filteredStations = filter === "Tất cả" ? stations : stations.filter((s) => {
-    if (filter === "Hoạt động") return s.status === "ACTIVE";
-    if (filter === "Bảo trì") return s.status === "MAINTENANCE";
-    if (filter === "Dừng hoạt động") return s.status === "INACTIVE";
-    return true;
-  });
+  if (loading) return <p>Đang tải dữ liệu...</p>;
 
   return (
     <div className={styles.page}>
@@ -194,7 +202,7 @@ const TollStationPage = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredStations.map((s) => (
+          {pagedStations.map((s) => (
             <tr key={s.id}>
               <td>{s.id}</td>
               <td>{s.name}</td>

@@ -4,16 +4,14 @@ import { BASE_URL } from "./index";
 const getToken = () => localStorage.getItem("token")?.trim();
 
 /**
- * Lấy danh sách giao dịch thu phí, có phân trang
- * @param {number} page - số trang (0-based)
- * @param {number} size - số giao dịch/trang
- * @returns {Promise<{content: Array, page: number, size: number, totalElements: number, totalPages: number}>}
+ * Lấy toàn bộ danh sách giao dịch (backend KHÔNG phân trang)
+ * FE sẽ tự phân trang
  */
-export const getTransactions = async (page = 0, size = 20) => {
+export const getTransactions = async () => {
   const token = getToken();
   if (!token) throw new Error("Bạn chưa đăng nhập");
 
-  const res = await fetch(`${BASE_URL}/admin/toll-transactions/transactions?page=${page}&size=${size}`, {
+  const res = await fetch(`${BASE_URL}/admin/toll-transactions/transactions`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -38,41 +36,34 @@ export const getTransactions = async (page = 0, size = 20) => {
 
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách giao dịch");
 
-  // Trả về object giống paging chuẩn FE nhận { content, page, size, totalElements, totalPages }
-  return {
-    content: data.result?.content || [],
-    page: data.result?.number || 0,
-    size: data.result?.size || size,
-    totalElements: data.result?.totalElements || 0,
-    totalPages: data.result?.totalPages || 1,
-  };
+  // Backend trả { code, message, result: [...] }
+  return data.result || [];
 };
 
 /**
- * Tùy chọn: lọc giao dịch theo trạm hoặc thời gian có thể thêm params filter
- * Ví dụ:
- * @param {object} filter - { stationName, dateFrom, dateTo }
+ * Lọc giao dịch (backend KHÔNG phân trang)
  */
-export const getTransactionsWithFilter = async (filter = {}, page = 0, size = 20) => {
+export const getTransactionsWithFilter = async (filter = {}) => {
   const token = getToken();
   if (!token) throw new Error("Bạn chưa đăng nhập");
 
   const params = new URLSearchParams({
-    page,
-    size,
     ...(filter.stationName ? { stationName: filter.stationName } : {}),
     ...(filter.dateFrom ? { dateFrom: filter.dateFrom } : {}),
     ...(filter.dateTo ? { dateTo: filter.dateTo } : {}),
   });
 
-  const res = await fetch(`${BASE_URL}/admin/toll-transactions/transactions?${params.toString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await fetch(
+    `${BASE_URL}/admin/toll-transactions/transactions?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   const text = await res.text();
   let data = {};
@@ -90,11 +81,5 @@ export const getTransactionsWithFilter = async (filter = {}, page = 0, size = 20
 
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách giao dịch");
 
-  return {
-    content: data.result?.content || [],
-    page: data.result?.number || 0,
-    size: data.result?.size || size,
-    totalElements: data.result?.totalElements || 0,
-    totalPages: data.result?.totalPages || 1,
-  };
+  return data.result || [];
 };

@@ -6,7 +6,7 @@ import { BASE_URL } from "./index";
  */
 export const login = async (username, password) => {
   try {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    const res = await fetch(`${BASE_URL}/auth/loginAdmin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

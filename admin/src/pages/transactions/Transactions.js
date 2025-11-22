@@ -8,12 +8,13 @@ import { getTransactionsWithFilter } from "../../api/transactionAPI";
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
+
+  // --- Frontend pagination ---
+  const [page, setPage] = useState(1); // 1-based
+  const pageSize = 10;
 
   const [filter, setFilter] = useState({
-    stationName: "", // filter theo trạm
+    stationName: "",
     dateFrom: "",
     dateTo: "",
   });
@@ -21,9 +22,9 @@ const Transactions = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getTransactionsWithFilter(filter, page, size);
-      setTransactions(data.content);
-      setTotalPages(data.totalPages);
+      const data = await getTransactionsWithFilter(filter); // API trả mảng
+      setTransactions(Array.isArray(data) ? data : []);
+      setPage(1); // reset page khi filter
     } catch (err) {
       alert("Lỗi khi tải dữ liệu: " + err.message);
     } finally {
@@ -33,12 +34,17 @@ const Transactions = () => {
 
   useEffect(() => {
     fetchData();
-  }, [page, size]); // gọi lại khi đổi page hoặc size
+  }, []);
 
-  // Danh sách trạm từ data hiện tại
+  // --- Tính transactions hiện tại theo page ---
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const displayTransactions = transactions.slice(start, end);
+
+  // --- Danh sách trạm ---
   const stations = ["Tất cả", ...Array.from(new Set(transactions.map(t => t.stationName)))];
 
-  // Tổng hợp stats
+  // --- Thống kê ---
   const stats = {
     count: transactions.length,
     totalAmount: transactions.reduce((sum, t) => sum + (t.amount || 0), 0),
@@ -46,7 +52,6 @@ const Transactions = () => {
 
   const handleSearch = (e) => {
     e?.preventDefault?.();
-    setPage(0); // reset về trang 0 khi filter
     fetchData();
   };
 
@@ -145,18 +150,18 @@ const Transactions = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions.length === 0 ? (
+            {displayTransactions.length === 0 ? (
               <tr>
                 <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
                   Không có giao dịch theo bộ lọc
                 </td>
               </tr>
             ) : (
-              transactions.map((t, i) => (
+              displayTransactions.map((t, i) => (
                 <tr key={i}>
-                  <td>{i + 1}</td>
+                  <td>{start + i + 1}</td>
                   <td>{t.stationName}</td>
-                  <td>{t.amount.toLocaleString()}</td>
+                  <td>{t.amount?.toLocaleString()}</td>
                   <td>{t.plateNumber}</td>
                   <td>{new Date(t.date).toLocaleString()}</td>
                 </tr>
@@ -166,7 +171,11 @@ const Transactions = () => {
         </table>
       </div>
 
-      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage}/>
+      <Pagination
+        currentPage={page}
+        totalPages={Math.ceil(transactions.length / pageSize)}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

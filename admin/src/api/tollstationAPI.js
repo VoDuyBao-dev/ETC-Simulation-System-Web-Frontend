@@ -16,19 +16,15 @@ const parseJSON = async (res) => {
 };
 
 /**
- * Lấy danh sách trạm phân trang
- * @param {number} page - số trang (1-based)
- * @param {number} size - số trạm/trang
+ * Lấy danh sách tất cả trạm
  */
-export const getStations = async (page = 1, size = 5) => {
+export const getStations = async () => {
   const token = getToken();
   if (!token) throw new Error("Bạn chưa đăng nhập");
 
-  const url = `${BASE_URL}/admin/stations?page=${page}&size=${size}`;
-  const res = await fetch(url, {
+  const res = await fetch(`${BASE_URL}/admin/stations`, {
     method: "GET",
     headers: {
-      "Content-Type": "application/json",
       "Accept": "application/json",
       Authorization: `Bearer ${token}`,
     },
@@ -43,7 +39,7 @@ export const getStations = async (page = 1, size = 5) => {
 
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách trạm");
 
-  return data; // { content: [...], page, size, totalElements, totalPages }
+  return Array.isArray(data.result) ? data.result : []; // mảng trạm hoặc { content: [...] } tùy backend
 };
 
 /**
@@ -58,28 +54,21 @@ export const addStation = async (station) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json",
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(station),
   });
 
   const data = await parseJSON(res);
-
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
-  }
-
   if (!res.ok) throw new Error(data.message || "Thêm trạm thất bại");
-
   return data;
 };
 
 /**
  * Sửa thông tin trạm
  * @param {number|string} id
- * @param {object} update - { name?, address?, latitude?, longitude? }
+ * @param {object} update - { name?, address?, latitude?, longitude?, code? }
  */
 export const updateStation = async (id, update) => {
   const token = getToken();
@@ -89,21 +78,14 @@ export const updateStation = async (id, update) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json",
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(update),
   });
 
   const data = await parseJSON(res);
-
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
-  }
-
   if (!res.ok) throw new Error(data.message || "Cập nhật trạm thất bại");
-
   return data;
 };
 
@@ -120,21 +102,14 @@ export const updateStationStatus = async (id, status) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json",
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ status }),
   });
 
   const data = await parseJSON(res);
-
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
-  }
-
   if (!res.ok) throw new Error(data.message || "Thay đổi trạng thái trạm thất bại");
-
   return data;
 };
 
@@ -148,21 +123,18 @@ export const deleteStation = async (id) => {
 
   const res = await fetch(`${BASE_URL}/admin/stations/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!res.ok) {
     const data = await parseJSON(res);
     throw new Error(data.message || "Xóa trạm thất bại");
   }
-
   return true;
 };
 
 /**
- * Lấy thống kê trạm (tổng số trạm, trạng thái,...)
+ * Lấy thống kê trạm
  */
 export const getStationStatistics = async () => {
   const token = getToken();
@@ -170,19 +142,10 @@ export const getStationStatistics = async () => {
 
   const res = await fetch(`${BASE_URL}/admin/stations/statistics`, {
     method: "GET",
-    headers: {
-      "Accept": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
   });
 
   const data = await parseJSON(res);
-
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    throw new Error(data.message || "Chưa đăng nhập hoặc token hết hạn");
-  }
-
   if (!res.ok) throw new Error(data.message || "Không thể lấy thống kê trạm");
 
   return data; // { totalStations, activeCount, maintenanceCount, inactiveCount, ... }
