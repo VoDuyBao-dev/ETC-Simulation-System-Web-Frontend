@@ -14,26 +14,13 @@ const Vehicle = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // === LocalStorage Handling ===
-  const loadDeletedVehicles = () => {
-    return JSON.parse(localStorage.getItem("deletedVehicles") || "[]");
-  };
-
-  const saveDeletedVehicles = (list) => {
-    localStorage.setItem("deletedVehicles", JSON.stringify(list));
-  };
-
   // === Lấy tất cả phương tiện ===
   const fetchVehicles = async () => {
     setLoading(true);
     try {
       const data = await getVehicles(); // trả về mảng
-
-      const deletedIds = loadDeletedVehicles();
-      const filtered = data.filter(v => !deletedIds.includes(v.id));
-
-      setVehicles(filtered);
-      updatePage(filtered, currentPage);
+      setVehicles(data);
+      updatePage(data, currentPage);
     } catch (err) {
       alert("Lỗi khi tải danh sách phương tiện: " + err.message);
       setVehicles([]);
@@ -41,7 +28,6 @@ const Vehicle = () => {
       setLoading(false);
     }
   };
-
 
   // === Cập nhật phương tiện trang hiện tại ===
   const updatePage = (allVehicles, page) => {
@@ -67,21 +53,10 @@ const Vehicle = () => {
     if (!window.confirm(`Bạn có chắc muốn xóa phương tiện ${plateNumber} không?`)) return;
 
     try {
-      // 1️⃣ Backend: đổi trạng thái ACTIVE → INACTIVE
-      await updateVehicleStatus(id, false); // false = INACTIVE
-
-      // 2️⃣ Lưu ID đã xóa vào LocalStorage
-      const deletedIds = loadDeletedVehicles();
-      const newDeleted = [...deletedIds, id];
-      saveDeletedVehicles(newDeleted);
-
-      // 3️⃣ Xóa khỏi giao diện
+      await deleteVehicle(id);
+      alert("Xóa thành công!");
       const newVehicles = vehicles.filter((v) => v.id !== id);
       setVehicles(newVehicles);
-
-      alert("Xóa thành công!");
-
-      // 4️⃣ Cập nhật phân trang nếu cần
       if (currentPage > Math.ceil(newVehicles.length / pageSize)) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -90,28 +65,36 @@ const Vehicle = () => {
     }
   };
 
-
-
-
   // === Khóa / mở khóa phương tiện ===
   const handleToggleStatus = async (id, status, plateNumber) => {
-    const isActive = status === "ACTIVE";
-    if (!window.confirm(`Bạn có chắc muốn ${isActive ? "dừng" : "mở"} hoạt động phương tiện ${plateNumber} không?`)) return;
+    const isActive = status === "ACTIVE";      // boolean đúng
+    const newStatus = isActive ? "INACTIVE" : "ACTIVE";
+
+    if (!window.confirm(`Bạn có chắc muốn ${isActive ? "dừng" : "mở"} hoạt động phương tiện ${plateNumber} không?`)) 
+      return;
 
     setActionLoading(true);
     try {
-      const updated = await updateVehicleStatus(id, !isActive);
+      await updateVehicleStatus(id, !isActive);  // gửi boolean cho backend
+
+      // Cập nhật frontend
       const newVehicles = vehicles.map((v) =>
-        v.id === id ? { ...v, status: updated.status } : v
+        v.id === id ? { ...v, status: newStatus } : v
       );
       setVehicles(newVehicles);
-      alert(`Phương tiện ${plateNumber} đã chuyển sang trạng thái ${updated.status === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"} thành công!`);
+
+      alert(
+        `Phương tiện ${plateNumber} đã chuyển sang trạng thái ${
+          newStatus === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"
+        } thành công!`
+      );
     } catch (err) {
       alert("Thay đổi trạng thái thất bại: " + err.message);
     } finally {
       setActionLoading(false);
     }
   };
+
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (!vehicles.length) return <p>Chưa có phương tiện nào.</p>;

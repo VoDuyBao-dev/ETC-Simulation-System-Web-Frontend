@@ -38,12 +38,9 @@ const TollStationPage = () => {
       const data = await getStations();
       const list = Array.isArray(data) ? data : data.content || [];
 
-      // 2 dòng lọc trạm đã xóa
-      const deleted = JSON.parse(localStorage.getItem("deletedStations")) || [];
-      const filteredList = list.filter((s) => !deleted.includes(s.id));
+      setStations(list);
+      setTotalPages(Math.ceil(list.length / size));
 
-      setStations(filteredList);
-      setTotalPages(Math.ceil(filteredList.length / size));
     } catch (err) {
       console.error("Failed to fetch stations:", err);
       setStations([]);
@@ -119,43 +116,30 @@ const TollStationPage = () => {
     setShowForm(true);
   };
 
-  const loadDeletedStations = () => {
-    try {
-      return JSON.parse(localStorage.getItem("deletedStations")) || [];
-    } catch {
-      return [];
-    }
-  };
-
-  const saveDeletedStations = (ids) => {
-    localStorage.setItem("deletedStations", JSON.stringify(ids));
-  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa trạm này không?")) return;
 
     try {
-      // 1️⃣ Backend: chuyển thành INACTIVE
-      await updateStationStatus(id, "INACTIVE");
+      // 1️⃣ Gọi API DELETE đúng tiêu chuẩn
+      await deleteStation(id);
 
-      // 2️⃣ Lưu vào LocalStorage để ẩn khi reload
-      const deleted = loadDeletedStations();
-      const updated = [...deleted, id];
-      saveDeletedStations(updated);
-
-      // 3️⃣ Xóa khỏi UI
+      // 2️⃣ Xóa khỏi UI
       const newList = stations.filter((s) => s.id !== id);
       setStations(newList);
 
-      // 4️⃣ Cập nhật phân trang
+      // 3️⃣ Cập nhật phân trang
       setTotalPages(Math.ceil(newList.length / size));
+      fetchStations();
+      fetchStatistics();
 
       alert("Xóa trạm thành công!");
     } catch (err) {
       console.error("Failed to delete station:", err);
-      alert("Có lỗi xảy ra khi xóa trạm!");
+      alert("Xóa thất bại: " + err.message);
     }
   };
+
 
 
   const handleToggleStatus = async (station) => {
