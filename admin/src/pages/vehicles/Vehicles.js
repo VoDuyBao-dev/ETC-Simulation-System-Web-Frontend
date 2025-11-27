@@ -14,13 +14,26 @@ const Vehicle = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // === LocalStorage Handling ===
+  const loadDeletedVehicles = () => {
+    return JSON.parse(localStorage.getItem("deletedVehicles") || "[]");
+  };
+
+  const saveDeletedVehicles = (list) => {
+    localStorage.setItem("deletedVehicles", JSON.stringify(list));
+  };
+
   // === Lấy tất cả phương tiện ===
   const fetchVehicles = async () => {
     setLoading(true);
     try {
       const data = await getVehicles(); // trả về mảng
-      setVehicles(data);
-      updatePage(data, currentPage);
+
+      const deletedIds = loadDeletedVehicles();
+      const filtered = data.filter(v => !deletedIds.includes(v.id));
+
+      setVehicles(filtered);
+      updatePage(filtered, currentPage);
     } catch (err) {
       alert("Lỗi khi tải danh sách phương tiện: " + err.message);
       setVehicles([]);
@@ -28,6 +41,7 @@ const Vehicle = () => {
       setLoading(false);
     }
   };
+
 
   // === Cập nhật phương tiện trang hiện tại ===
   const updatePage = (allVehicles, page) => {
@@ -53,10 +67,21 @@ const Vehicle = () => {
     if (!window.confirm(`Bạn có chắc muốn xóa phương tiện ${plateNumber} không?`)) return;
 
     try {
-      await deleteVehicle(id);
-      alert("Xóa thành công!");
+      // 1️⃣ Backend: đổi trạng thái ACTIVE → INACTIVE
+      await updateVehicleStatus(id, false); // false = INACTIVE
+
+      // 2️⃣ Lưu ID đã xóa vào LocalStorage
+      const deletedIds = loadDeletedVehicles();
+      const newDeleted = [...deletedIds, id];
+      saveDeletedVehicles(newDeleted);
+
+      // 3️⃣ Xóa khỏi giao diện
       const newVehicles = vehicles.filter((v) => v.id !== id);
       setVehicles(newVehicles);
+
+      alert("Xóa thành công!");
+
+      // 4️⃣ Cập nhật phân trang nếu cần
       if (currentPage > Math.ceil(newVehicles.length / pageSize)) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -64,6 +89,9 @@ const Vehicle = () => {
       alert("Xóa thất bại: " + err.message);
     }
   };
+
+
+
 
   // === Khóa / mở khóa phương tiện ===
   const handleToggleStatus = async (id, status, plateNumber) => {

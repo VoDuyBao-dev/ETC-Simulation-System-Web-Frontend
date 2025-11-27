@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./Dropdown.module.scss"
+import avatarImg from "../../../../../assets/imgs/image.jpg";
 
 const Dropdown = ({ username, onLogout }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -21,7 +22,7 @@ const Dropdown = ({ username, onLogout }) => {
   return (
     <div className={styles.userMenu} ref={menuRef}>
       <img
-        src="https://i.pravatar.cc/50"
+        src={avatarImg}
         alt="User Avatar"
         className={styles.avatarImg}
         onClick={toggleMenu}

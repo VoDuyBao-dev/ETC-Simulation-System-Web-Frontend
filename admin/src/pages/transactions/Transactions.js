@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./Transactions.module.scss";
 import { FaSearch, FaFileExport, FaMoneyBillWave, FaClock, FaMapMarkedAlt } from "react-icons/fa";
 import Pagination from "../../components/pagination/pagination";
-import { getTransactionsWithFilter } from "../../api/transactionAPI";
+import { getTransactions } from "../../api/transactionAPI"; // gọi API không filter
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -19,12 +19,13 @@ const Transactions = () => {
     dateTo: "",
   });
 
+  // --- Lấy dữ liệu toàn bộ từ backend ---
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getTransactionsWithFilter(filter); // API trả mảng
+      const data = await getTransactions(); // API trả tất cả giao dịch
       setTransactions(Array.isArray(data) ? data : []);
-      setPage(1); // reset page khi filter
+      setPage(1); // reset page khi tải dữ liệu
     } catch (err) {
       alert("Lỗi khi tải dữ liệu: " + err.message);
     } finally {
@@ -36,29 +37,44 @@ const Transactions = () => {
     fetchData();
   }, []);
 
-  // --- Tính transactions hiện tại theo page ---
+  // --- Filter frontend ---
+  const filteredTransactions = transactions.filter((t) => {
+    // lọc theo trạm
+    if (filter.stationName && filter.stationName !== "Tất cả" && t.stationName !== filter.stationName)
+      return false;
+
+    // lọc theo ngày
+    const tDate = new Date(t.date);
+    if (filter.dateFrom && tDate < new Date(filter.dateFrom)) return false;
+    if (filter.dateTo && tDate > new Date(filter.dateTo)) return false;
+
+    return true;
+  });
+
+  // --- Phân trang ---
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
-  const displayTransactions = transactions.slice(start, end);
+  const displayTransactions = filteredTransactions.slice(start, end);
+  const totalPages = Math.ceil(filteredTransactions.length / pageSize);
 
   // --- Danh sách trạm ---
   const stations = ["Tất cả", ...Array.from(new Set(transactions.map(t => t.stationName)))];
 
   // --- Thống kê ---
   const stats = {
-    count: transactions.length,
-    totalAmount: transactions.reduce((sum, t) => sum + (t.amount || 0), 0),
+    count: filteredTransactions.length,
+    totalAmount: filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0),
   };
 
   const handleSearch = (e) => {
     e?.preventDefault?.();
-    fetchData();
+    setPage(1); // reset về trang 1 khi search/filter
   };
 
   const handleExport = () => {
-    if (!transactions.length) return alert("Không có dữ liệu để xuất.");
+    if (!filteredTransactions.length) return alert("Không có dữ liệu để xuất.");
     const header = ["STT", "Trạm", "Biển số", "Số tiền", "Thời gian"];
-    const rows = transactions.map((r, i) => [
+    const rows = filteredTransactions.map((r, i) => [
       i + 1,
       r.stationName,
       r.plateNumber,
@@ -94,7 +110,7 @@ const Transactions = () => {
             <label>Trạm</label>
             <select
               value={filter.stationName}
-              onChange={(e) => setFilter({ ...filter, stationName: e.target.value === "Tất cả" ? "" : e.target.value })}
+              onChange={(e) => setFilter({ ...filter, stationName: e.target.value })}
             >
               {stations.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -173,7 +189,7 @@ const Transactions = () => {
 
       <Pagination
         currentPage={page}
-        totalPages={Math.ceil(transactions.length / pageSize)}
+        totalPages={totalPages}
         onPageChange={setPage}
       />
     </div>

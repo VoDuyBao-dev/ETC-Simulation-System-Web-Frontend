@@ -30,15 +30,20 @@ const TollStationPage = () => {
   const [selectedMap, setSelectedMap] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   // ==== Lấy dữ liệu
   const fetchStations = async () => {
     setLoading(true);
     try {
       const data = await getStations();
-      // đảm bảo stations là array
       const list = Array.isArray(data) ? data : data.content || [];
-      setStations(list);
-      setTotalPages(Math.ceil(list.length / size));
+
+      // 2 dòng lọc trạm đã xóa
+      const deleted = JSON.parse(localStorage.getItem("deletedStations")) || [];
+      const filteredList = list.filter((s) => !deleted.includes(s.id));
+
+      setStations(filteredList);
+      setTotalPages(Math.ceil(filteredList.length / size));
     } catch (err) {
       console.error("Failed to fetch stations:", err);
       setStations([]);
@@ -47,6 +52,7 @@ const TollStationPage = () => {
       setLoading(false);
     }
   };
+
 
   const fetchStatistics = async () => {
     try {
@@ -82,8 +88,8 @@ const TollStationPage = () => {
         name: form.name,
         address: form.address,
         status: form.status,
-        latitude: form.lat,
-        longitude: form.lng,
+        latitude: form.latitude,
+        longitude: form.longitude,
         
       };
       if (form.id) {
@@ -107,22 +113,50 @@ const TollStationPage = () => {
       name: station.name,
       address: station.address,
       status: station.status,
-      lat: station.latitude,
-      lng: station.longitude,
+      latitude: station.latitude,
+      longitude: station.longitude,
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa trạm này không?")) return;
+  const loadDeletedStations = () => {
     try {
-      await deleteStation(id);
-      fetchStations();
-      fetchStatistics();
-    } catch (err) {
-      console.error("Failed to delete station:", err);
+      return JSON.parse(localStorage.getItem("deletedStations")) || [];
+    } catch {
+      return [];
     }
   };
+
+  const saveDeletedStations = (ids) => {
+    localStorage.setItem("deletedStations", JSON.stringify(ids));
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn xóa trạm này không?")) return;
+
+    try {
+      // 1️⃣ Backend: chuyển thành INACTIVE
+      await updateStationStatus(id, "INACTIVE");
+
+      // 2️⃣ Lưu vào LocalStorage để ẩn khi reload
+      const deleted = loadDeletedStations();
+      const updated = [...deleted, id];
+      saveDeletedStations(updated);
+
+      // 3️⃣ Xóa khỏi UI
+      const newList = stations.filter((s) => s.id !== id);
+      setStations(newList);
+
+      // 4️⃣ Cập nhật phân trang
+      setTotalPages(Math.ceil(newList.length / size));
+
+      alert("Xóa trạm thành công!");
+    } catch (err) {
+      console.error("Failed to delete station:", err);
+      alert("Có lỗi xảy ra khi xóa trạm!");
+    }
+  };
+
 
   const handleToggleStatus = async (station) => {
     const newStatus = station.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
@@ -138,7 +172,7 @@ const TollStationPage = () => {
   };
 
   const resetForm = () => {
-    setForm({ id: null, name: "", address: "", status: "ACTIVE", lat: "", lng: "" });
+    setForm({ id: null, name: "", address: "", status: "ACTIVE", latitude: "", longitude: "" });
     setShowForm(false);
   };
 
@@ -180,8 +214,8 @@ const TollStationPage = () => {
             <option value="MAINTENANCE">Bảo trì</option>
             <option value="INACTIVE">Dừng hoạt động</option>
           </select>
-          <input type="number" step="any" placeholder="Vĩ độ (lat)" value={form.lat} onChange={(e) => setForm({ ...form, lat: e.target.value })} required />
-          <input type="number" step="any" placeholder="Kinh độ (lng)" value={form.lng} onChange={(e) => setForm({ ...form, lng: e.target.value })} required />
+          <input type="number" step="any" placeholder="Vĩ độ (lat)" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} required />
+          <input type="number" step="any" placeholder="Kinh độ (lng)" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} required />
           <div className={styles.formActions}>
             <button type="submit">Lưu</button>
             <button type="button" onClick={resetForm}>Hủy</button>
@@ -233,7 +267,7 @@ const TollStationPage = () => {
       {selectedMap && (
         <div className={styles.mapContainer}>
           <h3>Bản đồ: {selectedMap.name}</h3>
-          <iframe title="map" src={`https://www.google.com/maps?q=${selectedMap.lat},${selectedMap.lng}&hl=vi&z=14&output=embed`} width="100%" height="400" style={{ border: 0 }}></iframe>
+          <iframe title="map" src={`https://www.google.com/maps?q=${selectedMap.latitude},${selectedMap.longitude}&hl=vi&z=14&output=embed`} width="100%" height="400" style={{ border: 0 }}></iframe>
           <button onClick={() => setSelectedMap(null)}>Đóng bản đồ</button>
         </div>
       )}

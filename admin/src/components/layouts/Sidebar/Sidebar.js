@@ -1,6 +1,7 @@
 import React, { useState, useEffect} from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.scss";
+import avatarImg from "../../../assets/imgs/image.jpg";
 import {
   FaHome,
   FaUsers,
@@ -41,7 +42,7 @@ const Sidebar = () => {
       {/* ===== Profile ===== */}
       <div className={styles.profile}>
         <img
-          src="https://i.pravatar.cc/50"
+          src={avatarImg}
           alt="User Avatar"
           className={styles.avatar}
         />

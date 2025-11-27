@@ -75,30 +75,6 @@ export const addVehicle = async (vehicle) => {
 };
 
 /**
- * Xóa phương tiện
- * @param {number|string} id - vehicleId
- * @returns {Promise<boolean>}
- */
-export const deleteVehicle = async (id) => {
-  const token = getToken();
-  if (!token) throw new Error("Bạn chưa đăng nhập");
-
-  const res = await fetch(`${BASE_URL}/admin/vehicles/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const data = await parseJSON(res);
-    throw new Error(data.message || "Xóa phương tiện thất bại");
-  }
-
-  return true;
-};
-
-/**
  * Cập nhật trạng thái phương tiện
  * @param {number|string} id - vehicleId
  * @param {boolean} active - true: ACTIVE, false: INACTIVE

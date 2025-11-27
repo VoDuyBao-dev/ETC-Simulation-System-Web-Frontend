@@ -73,7 +73,7 @@ const Users = () => {
       <table className={styles.userTable}>
         <thead>
           <tr>
-            <th>#</th>
+            <th></th>
             <th>Họ và tên</th>
             <th>Email</th>
             <th>Quyền</th>
