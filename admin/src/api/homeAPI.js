@@ -36,7 +36,7 @@ export const getDashboardData = async () => {
 
   if (!res.ok) throw new Error(data.message || "Không thể tải dashboard data");
 
-  return data; // { summary, revenueByMonth, top5Stations, failedTransactions, totalFailed }
+  return data.result || {}; // { summary, revenueByMonth, top5Stations, failedTransactions, totalFailed }
 };
 
 /**

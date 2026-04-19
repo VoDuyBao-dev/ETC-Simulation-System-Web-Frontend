@@ -39,8 +39,11 @@ export const getVehicles = async () => {
   }
 
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách phương tiện");
-
-  return data.result || [];
+  
+  return {
+    vehicles: data.result?.content || [],
+    totalPages: data.result?.totalPages || 0,
+  };
 };
 
 /**

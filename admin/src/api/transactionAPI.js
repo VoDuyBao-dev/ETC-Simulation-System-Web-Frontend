@@ -37,6 +37,6 @@ export const getTransactions = async () => {
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách giao dịch");
 
   // Backend trả { code, message, result: [...] }
-  return data.result || [];
+  return data.result?.content || [];
 };
 

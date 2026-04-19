@@ -148,5 +148,5 @@ export const getStationStatistics = async () => {
   const data = await parseJSON(res);
   if (!res.ok) throw new Error(data.message || "Không thể lấy thống kê trạm");
 
-  return data; // { totalStations, activeCount, maintenanceCount, inactiveCount, ... }
+  return data.result || {};// { totalStations, activeCount, maintenanceCount, inactiveCount, ... }
 };
